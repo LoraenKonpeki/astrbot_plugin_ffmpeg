@@ -1,0 +1,86 @@
+{
+  "ffmpeg_path": {
+    "description": "FFmpeg 路径",
+    "type": "string",
+    "default": "ffmpeg",
+    "hint": "容器内通常可使用 ffmpeg；mini 的 AstrBot Pod 内当前为 /usr/bin/ffmpeg。"
+  },
+  "ffprobe_path": {
+    "description": "FFprobe 路径",
+    "type": "string",
+    "default": "ffprobe",
+    "hint": "容器内通常可使用 ffprobe；mini 的 AstrBot Pod 内当前为 /usr/bin/ffprobe。"
+  },
+  "timeout_seconds": {
+    "description": "单次任务超时秒数",
+    "type": "int",
+    "default": 120,
+    "hint": "超过该时间会终止 FFmpeg/FFprobe 子进程。",
+    "slider": {"min": 5, "max": 600, "step": 5}
+  },
+  "max_input_mb": {
+    "description": "最大输入大小 MB",
+    "type": "int",
+    "default": 50,
+    "hint": "超过该大小的本地输入文件会被拒绝。",
+    "slider": {"min": 1, "max": 500, "step": 1}
+  },
+  "max_output_mb": {
+    "description": "最大输出大小 MB",
+    "type": "int",
+    "default": 50,
+    "hint": "输出文件超过该大小会被拒绝发送。",
+    "slider": {"min": 1, "max": 500, "step": 1}
+  },
+  "max_concurrent_jobs": {
+    "description": "最大并发任务数",
+    "type": "int",
+    "default": 1,
+    "hint": "建议保持 1，避免群聊中同时转码占满 CPU。",
+    "slider": {"min": 1, "max": 4, "step": 1}
+  },
+  "max_media_context_items": {
+    "description": "每会话保留媒体数量",
+    "type": "int",
+    "default": 20,
+    "hint": "供 LLM tool 和未直接回复时选择最近媒体。",
+    "slider": {"min": 1, "max": 100, "step": 1}
+  },
+  "allowed_formats": {
+    "description": "允许转换的输出格式",
+    "type": "list",
+    "default": ["mp3", "wav", "ogg", "mp4", "gif", "jpg", "png"],
+    "hint": "仅这些格式可用于 ffmpeg to <format>。"
+  },
+  "default_gif_seconds": {
+    "description": "GIF 默认截取秒数",
+    "type": "float",
+    "default": 5,
+    "hint": "使用 ffmpeg gif 且未指定结束时间时生效。"
+  },
+  "llm_silent_mode": {
+    "description": "LLM 工具静默模式",
+    "type": "bool",
+    "default": false,
+    "hint": "关闭时，LLM 转换媒体后会直接发送生成的媒体；开启时只返回工具调用结果。"
+  },
+  "gif": {
+    "description": "GIF 预设",
+    "type": "object",
+    "items": {
+      "width": {
+        "description": "GIF 宽度",
+        "type": "int",
+        "default": 480,
+        "slider": {"min": 64, "max": 1280, "step": 16}
+      },
+      "fps": {
+        "description": "GIF 帧率",
+        "type": "int",
+        "default": 10,
+        "slider": {"min": 1, "max": 30, "step": 1}
+      }
+    }
+  }
+}
+

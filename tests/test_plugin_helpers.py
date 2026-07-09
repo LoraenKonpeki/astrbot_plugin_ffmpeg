@@ -1,0 +1,80 @@
+from pathlib import Path
+
+import pytest
+
+from main import (
+    PluginConfig,
+    _component_for_output,
+    _config_from_dict,
+    _format_probe_text,
+    _parse_ffmpeg_args,
+)
+
+
+def test_config_from_dict_normalizes_limits_and_paths():
+    config = _config_from_dict(
+        {
+            "ffmpeg_path": "/usr/bin/ffmpeg",
+            "ffprobe_path": "/usr/bin/ffprobe",
+            "timeout_seconds": 1,
+            "max_input_mb": 2,
+            "max_output_mb": 3,
+            "max_concurrent_jobs": 0,
+            "gif": {"width": 240, "fps": 8},
+            "allowed_formats": ["mp3", "mp4"],
+        }
+    )
+
+    assert isinstance(config, PluginConfig)
+    assert config.ffmpeg.ffmpeg_path == "/usr/bin/ffmpeg"
+    assert config.ffmpeg.timeout_seconds == 1
+    assert config.ffmpeg.max_input_bytes == 2 * 1024 * 1024
+    assert config.ffmpeg.max_output_bytes == 3 * 1024 * 1024
+    assert config.max_concurrent_jobs == 1
+    assert config.ffmpeg.gif_width == 240
+    assert config.ffmpeg.gif_fps == 8
+
+
+def test_parse_ffmpeg_args_supports_safe_operations():
+    assert _parse_ffmpeg_args("ffmpeg to mp3") == ("to", ["mp3"])
+    assert _parse_ffmpeg_args("ffmpeg cut 00:00:01 00:00:03") == ("cut", ["00:00:01", "00:00:03"])
+    assert _parse_ffmpeg_args("ffmpeg audio") == ("audio", [])
+    assert _parse_ffmpeg_args("ffmpeg cover 2.5") == ("cover", ["2.5"])
+    assert _parse_ffmpeg_args("ffmpeg gif 1 3") == ("gif", ["1", "3"])
+
+
+def test_parse_ffmpeg_args_rejects_unknown_operation():
+    with pytest.raises(ValueError, match="unknown operation"):
+        _parse_ffmpeg_args("ffmpeg -i a b")
+
+
+def test_component_for_output_chooses_astrbot_component_class(tmp_path: Path):
+    image_path = tmp_path / "out.gif"
+    record_path = tmp_path / "out.mp3"
+    video_path = tmp_path / "out.mp4"
+    file_path = tmp_path / "out.bin"
+    for path in (image_path, record_path, video_path, file_path):
+        path.write_bytes(b"x")
+
+    assert _component_for_output(image_path, "image").__class__.__name__ == "Image"
+    assert _component_for_output(record_path, "record").__class__.__name__ == "Record"
+    assert _component_for_output(video_path, "video").__class__.__name__ == "Video"
+    file_component = _component_for_output(file_path, "file")
+    assert file_component.__class__.__name__ == "File"
+    assert file_component.name == "out.bin"
+
+
+def test_format_probe_text_includes_summary_fields():
+    text = _format_probe_text(
+        {
+            "format": "mp4",
+            "duration": "8.50s",
+            "size": "1.18 MiB",
+            "bit_rate": "1162 kbps",
+            "streams": ["video: h264 1920x1080 8.50s", "audio: aac 48000 Hz"],
+        }
+    )
+
+    assert "格式: mp4" in text
+    assert "时长: 8.50s" in text
+    assert "video: h264" in text

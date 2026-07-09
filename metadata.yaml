@@ -1,0 +1,12 @@
+name: ffmpeg
+desc: 安全的 FFmpeg/FFprobe 媒体转换、裁剪、探测工具，支持命令和 LLM tool
+version: v0.1.0
+author: Loraen_Konpeki
+repo: https://github.com/LoraenKonpeki/astrbot_plugin_ffmpeg
+support_platforms:
+  - aiocqhttp
+  - telegram
+  - discord
+  - slack
+  - satori
+
