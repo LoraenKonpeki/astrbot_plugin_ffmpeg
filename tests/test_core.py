@@ -53,7 +53,7 @@ def test_build_probe_plan_uses_ffprobe_json_output(tmp_path: Path):
 
 
 def test_build_convert_plan_whitelists_formats_and_builds_output(tmp_path: Path):
-    source = tmp_path / "input.wav"
+    source = tmp_path / "original song.wav"
     source.write_bytes(b"fake")
 
     plan = build_convert_plan(source, "mp3", tmp_path, FfmpegConfig(ffmpeg_path="ffmpeg-custom"))
@@ -63,6 +63,8 @@ def test_build_convert_plan_whitelists_formats_and_builds_output(tmp_path: Path)
     assert plan.output_kind == "file"
     assert plan.output_path is not None
     assert plan.output_path.suffix == ".mp3"
+    assert plan.output_path.name == "original song.mp3"
+    assert plan.output_path.parent.parent == tmp_path.resolve()
     assert plan.args[:3] == ["ffmpeg-custom", "-y", "-hide_banner"]
     assert plan.args[-1] == str(plan.output_path)
 
@@ -84,7 +86,7 @@ def test_build_cut_plan_requires_end_after_start(tmp_path: Path):
 
 
 def test_build_cut_plan_outputs_mp4_by_default(tmp_path: Path):
-    source = tmp_path / "input.mp4"
+    source = tmp_path / "meeting clip.mp4"
     source.write_bytes(b"fake")
 
     plan = build_cut_plan(source, "1", "3.5", tmp_path, FfmpegConfig())
@@ -96,10 +98,12 @@ def test_build_cut_plan_outputs_mp4_by_default(tmp_path: Path):
     assert "-to" in plan.args
     assert plan.output_path is not None
     assert plan.output_path.suffix == ".mp4"
+    assert plan.output_path.name == "meeting clip.mp4"
+    assert plan.output_path.parent.parent == tmp_path.resolve()
 
 
 def test_build_cover_and_gif_plans_use_safe_presets(tmp_path: Path):
-    source = tmp_path / "input.mp4"
+    source = tmp_path / "cat video.mp4"
     source.write_bytes(b"fake")
 
     cover = build_cover_plan(source, "2.5", tmp_path, FfmpegConfig())
@@ -107,9 +111,11 @@ def test_build_cover_and_gif_plans_use_safe_presets(tmp_path: Path):
 
     assert cover.output_format == "jpg"
     assert cover.output_kind == "file"
+    assert cover.output_path.name == "cat video.jpg"
     assert "-frames:v" in cover.args
     assert gif.output_format == "gif"
     assert gif.output_kind == "file"
+    assert gif.output_path.name == "cat video.gif"
     assert "fps=12,scale=320:-1:flags=lanczos" in gif.args
 
 

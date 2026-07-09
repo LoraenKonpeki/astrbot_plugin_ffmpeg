@@ -96,7 +96,7 @@ def build_convert_plan(
 ) -> FfmpegPlan:
     source = _validate_input_path(input_path, config)
     fmt = _validate_format(output_format, config)
-    target = _make_output_path(output_dir, fmt)
+    target = _make_output_path(output_dir, source, fmt)
     args = [config.ffmpeg_path, "-y", "-hide_banner", "-loglevel", "error", "-i", str(source)]
 
     if fmt in {"mp3", "wav", "ogg"}:
@@ -133,7 +133,7 @@ def build_cut_plan(
     fmt = _infer_output_format(source)
     if fmt not in config.allowed_formats:
         fmt = "mp4"
-    target = _make_output_path(output_dir, fmt)
+    target = _make_output_path(output_dir, source, fmt)
     args = [
         config.ffmpeg_path,
         "-y",
@@ -162,7 +162,7 @@ def build_cut_plan(
 
 def build_audio_plan(input_path: str | Path, output_dir: str | Path, config: FfmpegConfig) -> FfmpegPlan:
     source = _validate_input_path(input_path, config)
-    target = _make_output_path(output_dir, "mp3")
+    target = _make_output_path(output_dir, source, "mp3")
     args = [
         config.ffmpeg_path,
         "-y",
@@ -194,7 +194,7 @@ def build_cover_plan(
 ) -> FfmpegPlan:
     source = _validate_input_path(input_path, config)
     seconds = parse_time_to_seconds(timestamp)
-    target = _make_output_path(output_dir, "jpg")
+    target = _make_output_path(output_dir, source, "jpg")
     args = [
         config.ffmpeg_path,
         "-y",
@@ -232,7 +232,7 @@ def build_gif_plan(
     if end_seconds <= start_seconds:
         raise FfmpegPlanError("end time must be after start time")
 
-    target = _make_output_path(output_dir, "gif")
+    target = _make_output_path(output_dir, source, "gif")
     video_filter = f"fps={config.gif_fps},scale={config.gif_width}:-1:flags=lanczos"
     args = [
         config.ffmpeg_path,
@@ -331,10 +331,11 @@ def _infer_output_format(source: Path) -> str:
     return suffix or "mp4"
 
 
-def _make_output_path(output_dir: str | Path, fmt: str) -> Path:
-    target_dir = Path(output_dir).expanduser().resolve()
+def _make_output_path(output_dir: str | Path, source: Path, fmt: str) -> Path:
+    target_dir = Path(output_dir).expanduser().resolve() / uuid.uuid4().hex
     target_dir.mkdir(parents=True, exist_ok=True)
-    return target_dir / f"astrbot_ffmpeg_{uuid.uuid4().hex}.{fmt}"
+    source_stem = source.stem or "output"
+    return target_dir / f"{source_stem}.{fmt}"
 
 
 def _format_seconds(seconds: float) -> str:
