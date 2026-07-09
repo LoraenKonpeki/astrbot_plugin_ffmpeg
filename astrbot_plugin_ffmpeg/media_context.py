@@ -115,8 +115,12 @@ def _flatten_components(components: list[Any]) -> list[Any]:
 
 
 def _component_source(component: Any) -> str:
-    for attr in ("path", "file", "url", "file_"):
+    for attr in ("path", "url", "file_"):
         value = getattr(component, attr, "")
+        if value:
+            return str(value)
+    if component.__class__.__name__ != "File":
+        value = getattr(component, "file", "")
         if value:
             return str(value)
     return ""

@@ -26,6 +26,16 @@ class FakeReply:
         self.chain = chain
 
 
+class FakeAstrBotFile:
+    def __init__(self, url: str = "", file_: str = ""):
+        self.url = url
+        self.file_ = file_
+
+    @property
+    def file(self):
+        raise AssertionError("File.file must not be accessed in async context")
+
+
 def test_capture_media_keeps_per_session_items_and_stable_ids():
     manager = MediaContextManager(max_items_per_session=5)
     event = FakeEvent("group:1", [FakeMedia(file="file:///tmp/a.mp4")])
@@ -87,3 +97,13 @@ def test_capture_media_inside_reply_chain():
 
     assert len(captured) == 1
     assert captured[0].source == "reply.mp4"
+
+
+def test_capture_file_component_prefers_url_without_touching_sync_file_property():
+    manager = MediaContextManager(max_items_per_session=5)
+    event = FakeEvent("group:1", [FakeAstrBotFile(url="https://example.test/a.mp3")])
+
+    captured = manager.capture_event_media(event)
+
+    assert len(captured) == 1
+    assert captured[0].source == "https://example.test/a.mp3"

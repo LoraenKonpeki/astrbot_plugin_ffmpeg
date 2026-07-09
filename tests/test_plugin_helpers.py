@@ -1,4 +1,5 @@
 from pathlib import Path
+import asyncio
 
 import pytest
 
@@ -7,8 +8,10 @@ from main import (
     _component_for_output,
     _config_from_dict,
     _format_probe_text,
+    _media_item_to_path,
     _parse_ffmpeg_args,
 )
+from astrbot_plugin_ffmpeg.media_context import MediaItem
 
 
 def test_config_from_dict_normalizes_limits_and_paths():
@@ -78,3 +81,29 @@ def test_format_probe_text_includes_summary_fields():
     assert "格式: mp4" in text
     assert "时长: 8.50s" in text
     assert "video: h264" in text
+
+
+def test_media_item_to_path_uses_async_get_file_for_file_components(tmp_path: Path):
+    downloaded = tmp_path / "downloaded.mp3"
+    downloaded.write_bytes(b"fake")
+
+    class FakeFileComponent:
+        async def get_file(self):
+            return str(downloaded)
+
+        @property
+        def file(self):
+            raise AssertionError("File.file must not be accessed in async context")
+
+    item = MediaItem(
+        media_id="m1",
+        session_id="s1",
+        component=FakeFileComponent(),
+        component_type="File",
+        source="https://example.test/a.mp3",
+        message_id="msg",
+        sender_id="u",
+        created_at=0,
+    )
+
+    assert asyncio.run(_media_item_to_path(item)) == downloaded.resolve()

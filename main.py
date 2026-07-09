@@ -380,6 +380,10 @@ def _format_probe_text(info: dict[str, Any]) -> str:
 
 
 async def _media_item_to_path(item: MediaItem) -> Path:
+    file_getter = getattr(item.component, "get_file", None)
+    if callable(file_getter):
+        return Path(await file_getter()).resolve()
+
     converter = getattr(item.component, "convert_to_file_path", None)
     if callable(converter):
         return Path(await converter()).resolve()
