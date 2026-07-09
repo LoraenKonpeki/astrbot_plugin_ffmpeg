@@ -51,7 +51,7 @@ def test_parse_ffmpeg_args_rejects_unknown_operation():
         _parse_ffmpeg_args("ffmpeg -i a b")
 
 
-def test_component_for_output_chooses_astrbot_component_class(tmp_path: Path):
+def test_component_for_output_always_uploads_generated_media_as_file(tmp_path: Path):
     image_path = tmp_path / "out.gif"
     record_path = tmp_path / "out.mp3"
     video_path = tmp_path / "out.mp4"
@@ -59,12 +59,15 @@ def test_component_for_output_chooses_astrbot_component_class(tmp_path: Path):
     for path in (image_path, record_path, video_path, file_path):
         path.write_bytes(b"x")
 
-    assert _component_for_output(image_path, "image").__class__.__name__ == "Image"
-    assert _component_for_output(record_path, "record").__class__.__name__ == "Record"
-    assert _component_for_output(video_path, "video").__class__.__name__ == "Video"
-    file_component = _component_for_output(file_path, "file")
-    assert file_component.__class__.__name__ == "File"
-    assert file_component.name == "out.bin"
+    for path, output_kind in (
+        (image_path, "image"),
+        (record_path, "record"),
+        (video_path, "video"),
+        (file_path, "file"),
+    ):
+        component = _component_for_output(path, output_kind)
+        assert component.__class__.__name__ == "File"
+        assert component.name == path.name
 
 
 def test_format_probe_text_includes_summary_fields():

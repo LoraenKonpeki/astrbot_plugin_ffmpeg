@@ -70,13 +70,6 @@ def parse_time_to_seconds(value: str | int | float) -> float:
 
 
 def output_kind_for_format(fmt: str) -> str:
-    normalized = _normalize_format(fmt)
-    if normalized in {"mp3", "wav", "ogg"}:
-        return "record"
-    if normalized in {"mp4"}:
-        return "video"
-    if normalized in {"gif", "jpg", "jpeg", "png"}:
-        return "image"
     return "file"
 
 
@@ -189,7 +182,7 @@ def build_audio_plan(input_path: str | Path, output_dir: str | Path, config: Ffm
         input_path=source,
         output_path=target,
         output_format="mp3",
-        output_kind="record",
+        output_kind="file",
     )
 
 
@@ -222,7 +215,7 @@ def build_cover_plan(
         input_path=source,
         output_path=target,
         output_format="jpg",
-        output_kind="image",
+        output_kind="file",
     )
 
 
@@ -263,7 +256,7 @@ def build_gif_plan(
         input_path=source,
         output_path=target,
         output_format="gif",
-        output_kind="image",
+        output_kind="file",
     )
 
 

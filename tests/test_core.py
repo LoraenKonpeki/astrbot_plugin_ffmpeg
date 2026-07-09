@@ -30,11 +30,11 @@ def test_parse_time_to_seconds_rejects_invalid_values():
         parse_time_to_seconds("-1")
 
 
-def test_output_kind_for_format_maps_formats_to_astrbot_component_types():
-    assert output_kind_for_format("mp3") == "record"
-    assert output_kind_for_format("mp4") == "video"
-    assert output_kind_for_format("gif") == "image"
-    assert output_kind_for_format("jpg") == "image"
+def test_output_kind_for_format_maps_all_ffmpeg_outputs_to_files():
+    assert output_kind_for_format("mp3") == "file"
+    assert output_kind_for_format("mp4") == "file"
+    assert output_kind_for_format("gif") == "file"
+    assert output_kind_for_format("jpg") == "file"
     assert output_kind_for_format("zip") == "file"
 
 
@@ -60,7 +60,7 @@ def test_build_convert_plan_whitelists_formats_and_builds_output(tmp_path: Path)
 
     assert plan.kind == "convert"
     assert plan.output_format == "mp3"
-    assert plan.output_kind == "record"
+    assert plan.output_kind == "file"
     assert plan.output_path is not None
     assert plan.output_path.suffix == ".mp3"
     assert plan.args[:3] == ["ffmpeg-custom", "-y", "-hide_banner"]
@@ -91,7 +91,7 @@ def test_build_cut_plan_outputs_mp4_by_default(tmp_path: Path):
 
     assert plan.kind == "cut"
     assert plan.output_format == "mp4"
-    assert plan.output_kind == "video"
+    assert plan.output_kind == "file"
     assert "-ss" in plan.args
     assert "-to" in plan.args
     assert plan.output_path is not None
@@ -106,10 +106,10 @@ def test_build_cover_and_gif_plans_use_safe_presets(tmp_path: Path):
     gif = build_gif_plan(source, "1", "4", tmp_path, FfmpegConfig(gif_width=320, gif_fps=12))
 
     assert cover.output_format == "jpg"
-    assert cover.output_kind == "image"
+    assert cover.output_kind == "file"
     assert "-frames:v" in cover.args
     assert gif.output_format == "gif"
-    assert gif.output_kind == "image"
+    assert gif.output_kind == "file"
     assert "fps=12,scale=320:-1:flags=lanczos" in gif.args
 
 

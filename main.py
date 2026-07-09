@@ -354,13 +354,6 @@ def _parse_ffmpeg_args(message: str) -> tuple[str, list[str]]:
 
 
 def _component_for_output(path: Path, output_kind: str):
-    output_kind = (output_kind or "file").lower()
-    if output_kind == "image":
-        return Image.fromFileSystem(path)
-    if output_kind == "record":
-        return Record.fromFileSystem(path)
-    if output_kind == "video":
-        return Video.fromFileSystem(path)
     return File(name=Path(path).name, file=str(path))
 
 
