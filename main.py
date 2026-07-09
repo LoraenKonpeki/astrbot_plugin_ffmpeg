@@ -7,19 +7,34 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from astrbot_plugin_ffmpeg.core import (
-    FfmpegConfig,
-    FfmpegPlanError,
-    build_audio_plan,
-    build_convert_plan,
-    build_cover_plan,
-    build_cut_plan,
-    build_gif_plan,
-    build_probe_plan,
-    parse_ffprobe_json,
-    run_plan,
-)
-from astrbot_plugin_ffmpeg.media_context import MediaContextManager, MediaItem
+try:
+    from .astrbot_plugin_ffmpeg.core import (
+        FfmpegConfig,
+        FfmpegPlanError,
+        build_audio_plan,
+        build_convert_plan,
+        build_cover_plan,
+        build_cut_plan,
+        build_gif_plan,
+        build_probe_plan,
+        parse_ffprobe_json,
+        run_plan,
+    )
+    from .astrbot_plugin_ffmpeg.media_context import MediaContextManager, MediaItem
+except ImportError:
+    from astrbot_plugin_ffmpeg.core import (
+        FfmpegConfig,
+        FfmpegPlanError,
+        build_audio_plan,
+        build_convert_plan,
+        build_cover_plan,
+        build_cut_plan,
+        build_gif_plan,
+        build_probe_plan,
+        parse_ffprobe_json,
+        run_plan,
+    )
+    from astrbot_plugin_ffmpeg.media_context import MediaContextManager, MediaItem
 
 try:
     from astrbot.api import logger
@@ -112,7 +127,7 @@ class PluginConfig:
 
 
 @register(
-    "ffmpeg",
+    "astrbot_plugin_ffmpeg",
     "Loraen_Konpeki",
     "安全的 FFmpeg/FFprobe 媒体转换、裁剪、探测工具，支持命令和 LLM tool",
     "0.1.0",

@@ -7,6 +7,8 @@ AstrBot 的安全 FFmpeg/FFprobe 媒体工具插件。它提供两种入口：
 
 插件调用系统 `ffmpeg` 和 `ffprobe`，不会暴露任意 FFmpeg 参数给用户或模型。
 
+插件元数据名是 `astrbot_plugin_ffmpeg`。如果你的 AstrBot 安装入口把目录命名为 `ffmpeg`，插件仍可正常加载；新版本也避免了内部导入依赖目录名。
+
 ## 功能
 
 - `ffprobe`：查看格式、时长、大小、码率、音视频流。
@@ -57,4 +59,3 @@ AstrBot 运行环境需要能找到 `ffmpeg` 和 `ffprobe`。在 `mini` 的 Astr
 python3 -m pytest -q
 python3 -m compileall .
 ```
-
