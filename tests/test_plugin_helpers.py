@@ -2,6 +2,7 @@ from pathlib import Path
 import asyncio
 
 import pytest
+import main as plugin_main
 
 from main import (
     PluginConfig,
@@ -25,6 +26,8 @@ def test_config_from_dict_normalizes_limits_and_paths():
             "max_concurrent_jobs": 0,
             "gif": {"width": 240, "fps": 8},
             "allowed_formats": ["mp3", "mp4"],
+            "file_base_url": "http://astrbot:6185",
+            "file_token_timeout_seconds": 600,
         }
     )
 
@@ -36,6 +39,8 @@ def test_config_from_dict_normalizes_limits_and_paths():
     assert config.max_concurrent_jobs == 1
     assert config.ffmpeg.gif_width == 240
     assert config.ffmpeg.gif_fps == 8
+    assert config.file_base_url == "http://astrbot:6185"
+    assert config.file_token_timeout_seconds == 600
 
 
 def test_parse_ffmpeg_args_supports_safe_operations():
@@ -65,9 +70,36 @@ def test_component_for_output_always_uploads_generated_media_as_file(tmp_path: P
         (video_path, "video"),
         (file_path, "file"),
     ):
-        component = _component_for_output(path, output_kind)
+        component = asyncio.run(_component_for_output(path, output_kind))
         assert component.__class__.__name__ == "File"
         assert component.name == path.name
+
+
+def test_component_for_output_uses_file_service_url_when_configured(tmp_path: Path, monkeypatch):
+    output_path = tmp_path / "out.mp3"
+    output_path.write_bytes(b"x")
+
+    class FakeFileTokenService:
+        async def register_file(self, file_path: str, timeout=None):
+            assert file_path == str(output_path)
+            assert timeout == 900
+            return "token-123"
+
+    monkeypatch.setattr(plugin_main, "file_token_service", FakeFileTokenService())
+
+    component = asyncio.run(
+        _component_for_output(
+            output_path,
+            "file",
+            file_base_url="http://astrbot:6185/",
+            file_token_timeout_seconds=900,
+        )
+    )
+
+    assert component.__class__.__name__ == "File"
+    assert component.name == "out.mp3"
+    assert component.url == "http://astrbot:6185/api/file/token-123"
+    assert component.file == "http://astrbot:6185/api/file/token-123"
 
 
 def test_format_probe_text_includes_summary_fields():

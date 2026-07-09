@@ -64,6 +64,19 @@
     "default": false,
     "hint": "关闭时，LLM 转换媒体后会直接发送生成的媒体；开启时只返回工具调用结果。"
   },
+  "file_base_url": {
+    "description": "文件下载服务 Base URL",
+    "type": "string",
+    "default": "",
+    "hint": "生成文件会先注册到 AstrBot /api/file，再把 URL 交给协议端下载。Docker/K8s 中协议端无法访问 AstrBot 本地路径时必须填写，例如 mini 中可用 http://astrbot:6185。留空则使用系统 callback_api_base；仍为空时回退本地路径。"
+  },
+  "file_token_timeout_seconds": {
+    "description": "文件下载 token 有效期秒数",
+    "type": "int",
+    "default": 900,
+    "hint": "协议端需要在该时间内下载生成文件。",
+    "slider": {"min": 60, "max": 3600, "step": 60}
+  },
   "gif": {
     "description": "GIF 预设",
     "type": "object",
@@ -83,4 +96,3 @@
     }
   }
 }
-

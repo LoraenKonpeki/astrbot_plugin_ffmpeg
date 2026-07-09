@@ -41,6 +41,7 @@ try:
     from astrbot.api.event import AstrMessageEvent, filter
     from astrbot.api.message_components import File, Image, Record, Video
     from astrbot.api.star import Context, Star, register
+    from astrbot.core import astrbot_config, file_token_service
     from astrbot.core.message.message_event_result import MessageChain
     from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 except ImportError:  # pragma: no cover - exercised indirectly by unit tests
@@ -116,6 +117,13 @@ except ImportError:  # pragma: no cover - exercised indirectly by unit tests
     def get_astrbot_data_path() -> str:
         return tempfile.gettempdir()
 
+    class _FallbackFileTokenService:
+        async def register_file(self, file_path: str, timeout=None):
+            return Path(file_path).name
+
+    file_token_service = _FallbackFileTokenService()
+    astrbot_config = {}
+
 
 @dataclass(frozen=True)
 class PluginConfig:
@@ -124,6 +132,8 @@ class PluginConfig:
     max_media_context_items: int = 20
     default_gif_seconds: float = 5.0
     llm_silent_mode: bool = False
+    file_base_url: str = ""
+    file_token_timeout_seconds: int = 900
 
 
 @register(
@@ -275,7 +285,12 @@ class AstrBotFfmpegPlugin(Star):
             if not plan.output_path:
                 yield event.plain_result("操作没有生成输出文件。")
                 return
-            component = _component_for_output(plan.output_path, plan.output_kind or "file")
+            component = await _component_for_output(
+                plan.output_path,
+                plan.output_kind or "file",
+                file_base_url=self.plugin_config.file_base_url,
+                file_token_timeout_seconds=self.plugin_config.file_token_timeout_seconds,
+            )
             if send_result:
                 await event.send(MessageChain(chain=[component]))
                 yield event.plain_result(f"已完成 {operation}，结果已发送。")
@@ -336,6 +351,8 @@ def _config_from_dict(raw_config: Any) -> PluginConfig:
         max_media_context_items=max(1, int(config.get("max_media_context_items", 20))),
         default_gif_seconds=max(0.1, float(config.get("default_gif_seconds", 5))),
         llm_silent_mode=bool(config.get("llm_silent_mode", False)),
+        file_base_url=str(config.get("file_base_url") or "").strip().rstrip("/"),
+        file_token_timeout_seconds=max(60, int(config.get("file_token_timeout_seconds", 900))),
     )
 
 
@@ -353,8 +370,21 @@ def _parse_ffmpeg_args(message: str) -> tuple[str, list[str]]:
     return operation, args
 
 
-def _component_for_output(path: Path, output_kind: str):
-    return File(name=Path(path).name, file=str(path))
+async def _component_for_output(
+    path: Path,
+    output_kind: str,
+    file_base_url: str = "",
+    file_token_timeout_seconds: int = 900,
+):
+    output_path = Path(path)
+    base_url = (file_base_url or str(astrbot_config.get("callback_api_base") or "")).strip().rstrip("/")
+    if base_url:
+        token = await file_token_service.register_file(
+            str(output_path),
+            timeout=file_token_timeout_seconds,
+        )
+        return File(name=output_path.name, url=f"{base_url}/api/file/{token}")
+    return File(name=output_path.name, file=str(output_path))
 
 
 def _format_probe_text(info: dict[str, Any]) -> str:

@@ -53,6 +53,12 @@ AstrBot 运行环境需要能找到 `ffmpeg` 和 `ffprobe`。在 `mini` 的 Astr
 
 如运行环境不同，可在 AstrBot WebUI 配置 `ffmpeg_path` 和 `ffprobe_path`。
 
+如果协议端与 AstrBot 不共享文件系统，例如 AstrBot 和 NapCat 分别在不同容器中，需配置 `file_base_url`，让协议端通过 HTTP 下载转换结果。mini 的 K8s 环境可使用：
+
+```text
+http://astrbot:6185
+```
+
 ## 开发验证
 
 ```bash
